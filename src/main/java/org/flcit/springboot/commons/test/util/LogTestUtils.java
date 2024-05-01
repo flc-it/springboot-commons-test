@@ -1,0 +1,61 @@
+/*
+ * Copyright 2002-2023 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.flcit.springboot.commons.test.util;
+
+import static org.mockito.Mockito.mock;
+
+import org.slf4j.Logger;
+
+/**
+ * 
+ * @since 
+ * @author Florian Lestic
+ */
+public final class LogTestUtils {
+
+    private LogTestUtils() { }
+
+    /**
+     * @param obj
+     * @return
+     */
+    public static Logger setLogger(Object obj) {
+        return setLogger(obj, mock(Logger.class));
+    }
+
+    /**
+     * @param obj
+     * @param logger
+     * @return
+     */
+    public static Logger setLogger(Object obj, Logger logger) {
+        return setLogger(obj, "LOG", logger);
+    }
+
+    /**
+     * @param <T>
+     * @param obj
+     * @param name
+     * @param logger
+     * @return
+     */
+    public static <T> T setLogger(Object obj, String name, T logger) {
+        ReflectionTestUtils.setFieldValue(obj, name, logger);
+        return logger;
+    }
+
+}

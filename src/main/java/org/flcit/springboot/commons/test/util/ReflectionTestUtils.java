@@ -18,7 +18,6 @@ package org.flcit.springboot.commons.test.util;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 
 import org.springframework.util.ReflectionUtils;
 
@@ -85,21 +84,8 @@ public final class ReflectionTestUtils {
             return;
         }
         final Field field = getField(obj.getClass(), name);
-        makeFinalAccessible(field);
-        ReflectionUtils.setField(field, obj, value);
-    }
-
-    private static void makeFinalAccessible(Field field) {
         ReflectionUtils.makeAccessible(field);
-        if (Modifier.isFinal(field.getModifiers())) {
-            try {
-                final Field modifiersField = Field.class.getDeclaredField("modifiers");
-                ReflectionUtils.makeAccessible(modifiersField);
-                ReflectionUtils.setField(modifiersField, field, field.getModifiers() & ~Modifier.FINAL);
-            } catch (ReflectiveOperationException e) {
-                throw new IllegalStateException(e);
-            }
-        }
+        ReflectionUtils.setField(field, obj, value);
     }
 
     private static Field getField(Class<?> classType, String name) {

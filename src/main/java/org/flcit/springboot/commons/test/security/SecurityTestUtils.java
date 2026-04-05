@@ -19,7 +19,7 @@ package org.flcit.springboot.commons.test.security;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.servlet.Filter;
+import jakarta.servlet.Filter;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;

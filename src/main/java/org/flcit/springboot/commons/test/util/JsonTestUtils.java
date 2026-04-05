@@ -14,32 +14,25 @@
  * limitations under the License.
  */
 
-package org.flcit.springboot.commons.test.security.filter;
+package org.flcit.springboot.commons.test.util;
 
-import java.io.IOException;
-
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-
-import org.springframework.security.test.context.TestSecurityContextHolder;
-import org.springframework.web.filter.GenericFilterBean;
+import org.springframework.test.json.JsonCompareMode;
 
 /**
  * 
- * @since 
+ * @since 1.0.0
  * @author Florian Lestic
  */
-public class ClearUserFilter extends GenericFilterBean {
+public final class JsonTestUtils {
+
+    private JsonTestUtils() { }
 
     /**
-     *
+     * @param strict
+     * @return
      */
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
-        TestSecurityContextHolder.clearContext();
+    public static JsonCompareMode getMode(boolean strict) {
+        return strict ? JsonCompareMode.STRICT : JsonCompareMode.LENIENT;
     }
 
 }

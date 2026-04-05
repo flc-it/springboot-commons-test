@@ -28,8 +28,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.Part;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Part;
 
 import org.junit.jupiter.api.function.Executable;
 import org.springframework.boot.test.context.assertj.AssertableWebApplicationContext;
@@ -54,6 +54,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.ResultMatcher;
+import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -65,7 +66,7 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 
 import org.flcit.commons.core.util.IterableUtils;
 import org.flcit.springboot.commons.test.multipart.PartResource;
@@ -164,7 +165,7 @@ public final class MvcUtils {
     private static ResultActions assertGetJsonResponse(AssertableWebApplicationContext context, String path, Object[] uriVariables, Object expectedResponse, boolean strict, boolean async, ResultMatcher... expected) {
         expected = ObjectUtils.addObjectToArray(expected, content().contentType(MediaType.APPLICATION_JSON));
         if (expectedResponse != null) {
-            expected = ObjectUtils.addObjectToArray(expected, content().json(writeValueAsString(context, expectedResponse), strict));
+            expected = ObjectUtils.addObjectToArray(expected, content().json(writeValueAsString(context, expectedResponse), JsonTestUtils.getMode(strict)));
         }
         return assertGetResponseIntern(context, path, uriVariables, new MediaType[] { MediaType.APPLICATION_JSON }, async, expected);
     }
@@ -251,7 +252,7 @@ public final class MvcUtils {
         ResultMatcher[] expected = new ResultMatcher[] { status().isOk() };
         if (expectedResponse != null) {
             expected = ObjectUtils.addObjectToArray(expected, content().contentType(MediaType.APPLICATION_JSON));
-            expected = ObjectUtils.addObjectToArray(expected, content().json(writeValueAsString(context, expectedResponse), strict));
+            expected = ObjectUtils.addObjectToArray(expected, content().json(writeValueAsString(context, expectedResponse), JsonTestUtils.getMode(strict)));
         }
         return assertResponse(context, getMockMvcRequestBuilders(context, path, uriVariables, body, mockMultipart), new MediaType[] { MediaType.APPLICATION_JSON }, false, expected);
     }
@@ -311,13 +312,13 @@ public final class MvcUtils {
         return assertResponse(context, getMockMvcRequestBuilders(context, path, uriVariables, body), null, false, status().is(expectedStatus.value()));
     }
 
-    private static MockHttpServletRequestBuilder getMockMvcRequestBuilders(WebApplicationContext context, String path, Object[] uriVariables, Object body) {
+    private static AbstractMockHttpServletRequestBuilder<?> getMockMvcRequestBuilders(WebApplicationContext context, String path, Object[] uriVariables, Object body) {
         return getMockMvcRequestBuilders(context, path, uriVariables, body, false);
     }
 
-    private static MockHttpServletRequestBuilder getMockMvcRequestBuilders(WebApplicationContext context, String path, Object[] uriVariables, Object body, boolean mockMultipart) {
+    private static AbstractMockHttpServletRequestBuilder<?> getMockMvcRequestBuilders(WebApplicationContext context, String path, Object[] uriVariables, Object body, boolean mockMultipart) {
         final boolean multipart = isMultipart(body);
-        MockHttpServletRequestBuilder requestBuilder = null;
+        AbstractMockHttpServletRequestBuilder<?> requestBuilder = null;
         if (multipart) {
             requestBuilder = getMockMvcRequestBuildersMultipart(path, uriVariables, body, mockMultipart);
         } else {
@@ -327,10 +328,10 @@ public final class MvcUtils {
     }
 
     @SuppressWarnings("unchecked")
-    private static MockHttpServletRequestBuilder getMockMvcRequestBuildersMultipart(String path, Object[] uriVariables, Object body, boolean mockMultipart) {
+    private static AbstractMockHttpServletRequestBuilder<?> getMockMvcRequestBuildersMultipart(String path, Object[] uriVariables, Object body, boolean mockMultipart) {
         final MockMultipartHttpServletRequestBuilder multipartRequestBuilder = uriVariables != null ? MockMvcRequestBuilders.multipart(path, uriVariables) : MockMvcRequestBuilders.multipart(path);
-        if (body instanceof MockMultipartFile) {
-            multipartRequestBuilder.file((MockMultipartFile) body);
+        if (body instanceof MockMultipartFile mockMultipartFile) {
+            multipartRequestBuilder.file(mockMultipartFile);
         } else {
             final Iterable<MockMultipartFile> it = body.getClass().isArray() ? Arrays.asList((MockMultipartFile[]) body) : (Iterable<MockMultipartFile>) body;
             for (MockMultipartFile file : it) {
@@ -400,7 +401,7 @@ public final class MvcUtils {
         return false;
     }
 
-    private static ResultActions assertResponse(WebApplicationContext context, MockHttpServletRequestBuilder requestBuilder, MediaType[] mediaTypes, boolean async, ResultMatcher... expected) {
+    private static ResultActions assertResponse(WebApplicationContext context, AbstractMockHttpServletRequestBuilder<?> requestBuilder, MediaType[] mediaTypes, boolean async, ResultMatcher... expected) {
         final MockMvc mockMvc = getMockMvc(context);
         if (mediaTypes != null) {
             requestBuilder.accept(mediaTypes);
@@ -412,7 +413,7 @@ public final class MvcUtils {
         return assertAsyncResponse(getMockMvc(context), requestBuilder, null, expected);
     }
 
-    private static MvcResult assertAsyncResponse(MockMvc mockMvc, MockHttpServletRequestBuilder requestBuilder, Object expectedResult, ResultMatcher... expected) {
+    private static MvcResult assertAsyncResponse(MockMvc mockMvc, AbstractMockHttpServletRequestBuilder<?> requestBuilder, Object expectedResult, ResultMatcher... expected) {
         if (expectedResult != null) {
             expected = ObjectUtils.addObjectToArray(expected, request().asyncResult(expectedResult));
         }
@@ -498,27 +499,15 @@ public final class MvcUtils {
      * @return
      */
     public static <T> T convert(final WebApplicationContext context, final ResultActions result, Class<T> responseType) {
-        try {
-            return getObjectMapper(context).readValue(result.andReturn().getResponse().getContentAsByteArray(), responseType);
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
+        return getObjectMapper(context).readValue(result.andReturn().getResponse().getContentAsByteArray(), responseType);
     }
 
     private static String writeValueAsString(final WebApplicationContext context, final Object body) {
-        try {
-            return getObjectMapper(context).writeValueAsString(body);
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
+        return getObjectMapper(context).writeValueAsString(body);
     }
 
     private static byte[] writeValueAsBytes(final WebApplicationContext context, final Object body) {
-        try {
-            return getObjectMapper(context).writeValueAsBytes(body);
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
+        return getObjectMapper(context).writeValueAsBytes(body);
     }
 
     private static ObjectMapper getObjectMapper(final WebApplicationContext context) {

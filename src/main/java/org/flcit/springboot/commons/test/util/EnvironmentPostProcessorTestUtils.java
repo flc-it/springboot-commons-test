@@ -19,7 +19,7 @@ package org.flcit.springboot.commons.test.util;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.env.EnvironmentPostProcessor;
+import org.springframework.boot.EnvironmentPostProcessor;
 import org.springframework.core.io.support.ResourcePropertySource;
 import org.springframework.mock.env.MockEnvironment;
 

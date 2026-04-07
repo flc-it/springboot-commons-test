@@ -43,7 +43,7 @@ public final class LogTestUtils {
      * @return
      */
     public static Logger setLogger(Object obj, Logger logger) {
-        return setLogger(obj, "LOG", logger);
+        return setLogger(obj, "log", logger);
     }
 
     /**

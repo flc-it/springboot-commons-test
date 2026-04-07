@@ -272,6 +272,18 @@ public final class MvcUtils {
      * @param context
      * @param path
      * @param body
+     * @param expectedException
+     * @param expectedStatus
+     */
+    public static void assertPostThrows(AssertableWebApplicationContext context, String path, Object body, Class<? extends Throwable> expectedException, HttpStatus expectedStatus) {
+        final Executable executable = () -> assertPostResponseStatus(context, path, body, expectedStatus);
+        AssertUtils.assertThrowsCause(expectedException, executable);
+    }
+
+    /**
+     * @param context
+     * @param path
+     * @param body
      * @return
      */
     public static ResultActions assertPostResponse(AssertableWebApplicationContext context, String path, Object body) {

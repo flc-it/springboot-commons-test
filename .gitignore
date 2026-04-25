@@ -1,5 +1,10 @@
+### Build ###
 target
+### Release ###
+pom.xml.*
+release.properties
 ### Eclipse ###
 .classpath
 .project
 .settings
+
